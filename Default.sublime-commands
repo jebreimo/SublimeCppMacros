@@ -1,4 +1,5 @@
 [
     {"caption": "C++: Declare getter/setter", "command": "hpp_get_set"},
-    {"caption": "C++: Implement getter/setter", "command": "cpp_get_set"}
+    {"caption": "C++: Implement getter/setter", "command": "cpp_get_set"},
+    {"caption": "C++: Implement function", "command": "cpp_impl"}
 ]
