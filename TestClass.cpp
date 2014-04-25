@@ -14,3 +14,10 @@
 @<T>@@<T, Foo::UserId>
     std::vector<Error> m_Errors;
     std::string m_Name;
+
+
+@<T><T, Foo::UserId>
+    size_t m_Assertions;
+
+@<T>@<T, Foo::UserId>
+    size_t m_Assertions;

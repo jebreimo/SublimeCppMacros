@@ -1,5 +1,4 @@
 import os
-import re
 try:
     from parsemember import parseMember
 except ImportError:
@@ -54,90 +53,76 @@ def splitNameString(line):
 
 def parseTemplateSpec(line):
     spec = []
-    impl = []
-    for param in line[1:-1].split(","):
+    args = []
+    for param in (s.strip() for s in line[1:-1].split(",")):
         parts = param.split()
-        if not parts:
+        if not parts[0]:
             pass
         elif len(parts) == 1:
             spec.append("typename " + parts[0])
-            impl.append(param)
+            args.append(param)
         elif parts[0] == "typename":
             spec.append(param)
-            impl.append(parts[-1])
+            args.append(parts[-1])
         else:
             spec.append(param)
-            impl.append(parts[-1])
-    return ("template<%s>" % ", ".join(spec),
-            "<%s>" % ", ".join(impl))
+            args.append(parts[-1])
+    return ("template <%s>" % ", ".join(spec),
+            "<%s>" % ", ".join(args))
 
 def parseClassName(line, currentName, defaultName):
     parts = splitNameString(line)
-    print(parts)
     if not parts or len(parts) > 3:
-        return "", defaultName
-    spec, name, impl = "", "", ""
+        return "", defaultName, ""
+    tempSpec, name, tempArgs = "", "", ""
     if parts[0][0] == "<":
-        spec, impl = parseTemplateSpec(parts[0])
+        tempSpec, tempArgs = parseTemplateSpec(parts[0])
         if len(parts) == 1:
-            pass
+            tempArgs = ""
         elif len(parts) == 3:
-            name, impl = parts[1], parts[2]
+            name, tempArgs = parts[1], parts[2]
         elif parts[1][0] == "<":
-            impl = parts[1]
+            tempArgs = parts[1]
         else:
             name = parts[1]
     else:
         name = parts[0]
         if len(parts) == 2:
-            impl = parts[1]
+            tempSpec = "<>"
+            tempArgs = parts[1]
     if name == "@":
         name = defaultName
     elif name == "@@":
         name = currentName
     if name:
-        name = name + impl
-    return spec, name
+        name = name
+    return tempSpec, name, tempArgs
 
 def classNameFromFileName(fileName):
     return os.path.splitext(os.path.basename(fileName))[0]
 
 class CppGetSetMaker:
-    # ClassNameRegExp = re.compile("^([@]+)(#?)([^<]*)(?:[<]([^>]+)[>])?$")
     def __init__(self, fileName):
         self.defaultClassName = classNameFromFileName(fileName)
         self.className = self.defaultClassName
-        self.template = ""
-
-    # def _parseClassName(self, text):
-    #     groups = CppGetSetMaker.ClassNameRegExp.match(text)
-    #     if not groups:
-    #         return
-    #     if groups.group(2):
-    #         self.className = groups.group(2) + "::"
-    #     elif len(groups.group(1)) > 1:
-    #         self.className = self._classNameFromFileName() + "::"
-    #     if groups.group(3):
-    #         params = []
-    #         for param in (p.strip() for p in groups.group(3).split(",")):
-    #             if len(param.split()) == 1:
-    #                 params.append("typename " + param)
-    #             else:
-    #                 params.append(param)
-    #         self.template = "template <%s>\n" % ", ".join(params)
+        self.completeClassName = self.className + "::"
+        self.templateSpec = ""
 
     def parseLine(self, line):
         stripped = line.strip()
         if not stripped:
             return ""
         if stripped[0] == "@":
-            self.template, self.className = parseClassName(
+            tempSpec, name, tempArgs = parseClassName(
                     stripped, self.className, self.defaultClassName)
+            self.templateSpec = tempSpec and tempSpec + "\n"
+            self.className = name
+            self.completeClassName = name and name + tempArgs + "::"
         else:
             props = parseMember(line, "lower-set")
             if props:
-                props["class"] = self.className and self.className + "::"
-                props["template"] = self.template and self.template + "\n"
+                props["class"] = self.completeClassName
+                props["template"] = self.templateSpec
                 return CppGetSetTemplate % props
         return ""
 
