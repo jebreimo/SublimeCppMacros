@@ -27,10 +27,11 @@ class CppGetSetCommand(sublime_plugin.TextCommand):
         self.makers = {}
 
     def run(self, edit):
-        maker = self.makers.get(self.view.file_name())
+        bufferId = self.view.buffer_id()
+        maker = self.makers.get(bufferId)
         if not maker:
             maker = CppGetSetMaker(self.view.file_name())
-            self.makers[maker.fileName] = maker
+            self.makers[bufferId] = maker
         regions = []
         for reg in self.view.sel():
             lines = []

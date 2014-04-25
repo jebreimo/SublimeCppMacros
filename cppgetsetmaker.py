@@ -99,11 +99,15 @@ def parseClassName(line, currentName, defaultName):
     return tempSpec, name, tempArgs
 
 def classNameFromFileName(fileName):
+    if not fileName:
+        return ""
     return os.path.splitext(os.path.basename(fileName))[0]
 
 class CppGetSetMaker:
     def __init__(self, fileName):
         self.defaultClassName = classNameFromFileName(fileName)
+        if not self.defaultClassName:
+            self.defaultClassName = "CLASS"
         self.className = self.defaultClassName
         self.completeClassName = self.className + "::"
         self.templateSpec = ""
