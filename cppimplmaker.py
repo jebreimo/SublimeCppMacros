@@ -273,7 +273,7 @@ def getImplementation(func):
     lines.append("{")
     if func["value"]:
         lines.append(func["indentation"] + "return " + func["value"] + ";")
-    lines.append("}")
+    lines.append("}\n")
     return "\n".join(lines)
 
 class CppImplMaker:
@@ -303,8 +303,7 @@ class CppImplMaker:
                     code.append(getImplementation(d))
                 except Exception as ex:
                     code.append("// " + str(ex) + "\n" + "\n".join(lines))
-        return "\n\n".join(code)
-
+        return "\n".join(code)
 
 if __name__ == "__main__":
     import sys
