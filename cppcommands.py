@@ -13,6 +13,7 @@ class HppGetSetCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         regions = []
         for reg in self.view.sel():
+            reg = self.view.full_line(reg)
             lines = []
             for rawLine in self.view.substr(reg).split("\n"):
                 args = parseMember(rawLine, "lower-set")
@@ -35,6 +36,7 @@ class CppGetSetCommand(sublime_plugin.TextCommand):
             self.makers[bufferId] = maker
         regions = []
         for reg in self.view.sel():
+            reg = self.view.full_line(reg)
             lines = []
             for rawLine in self.view.substr(reg).split("\n"):
                 line = maker.parseLine(rawLine)
@@ -57,6 +59,7 @@ class CppImplCommand(sublime_plugin.TextCommand):
             self.makers[bufferId] = maker
         regions = []
         for reg in self.view.sel():
+            reg = self.view.full_line(reg)
             text = maker.parseText(self.view.substr(reg).split("\n"))
             if text:
                 regions.append((reg, text))
