@@ -1,19 +1,43 @@
 import sublime
 import sublime_plugin
-from .parsemember import parseMember
-from .cppgetsetmaker import CppGetSetMaker
-from .cppimplmaker import CppImplMaker
+try:
+    from parsemember import parseMember
+except ImportError:
+    from .parsemember import parseMember
+try:
+    from cppgetsetmaker import CppGetSetMaker
+except ImportError:
+    from .cppgetsetmaker import CppGetSetMaker
+try:
+    from cppimplmaker import CppImplMaker
+except ImportError:
+    from .cppimplmaker import CppImplMaker
 
 HppGetSetTemplate = """\
 %(indent)s%(static)s%(type)s %(get)s()%(get_suffix)s;
 %(indent)s%(static)svoid %(set)s(%(type)s value);
 """
 
+def selectFullLines(view, region):
+    if region.a == region.b:
+        return view.full_line(region)
+    beg = region.begin()
+    end = region.end()
+    begClass = view.classify(beg)
+    endClass = view.classify(end)
+    if begClass & sublime.CLASS_LINE_END:
+        beg += 1
+    if endClass & sublime.CLASS_LINE_START:
+        end -= 1
+    if beg != region.begin() or end != region.end():
+        region = sublime.Region(beg, end)
+    return view.full_line(region)
+
 class HppGetSetCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         regions = []
         for reg in self.view.sel():
-            reg = self.view.full_line(reg)
+            reg = selectFullLines(self.view, reg)
             lines = []
             for rawLine in self.view.substr(reg).split("\n"):
                 args = parseMember(rawLine, "lower-set")
@@ -36,7 +60,7 @@ class CppGetSetCommand(sublime_plugin.TextCommand):
             self.makers[bufferId] = maker
         regions = []
         for reg in self.view.sel():
-            reg = self.view.full_line(reg)
+            reg = selectFullLines(self.view, reg)
             lines = []
             for rawLine in self.view.substr(reg).split("\n"):
                 line = maker.parseLine(rawLine)
@@ -59,7 +83,7 @@ class CppImplCommand(sublime_plugin.TextCommand):
             self.makers[bufferId] = maker
         regions = []
         for reg in self.view.sel():
-            reg = self.view.full_line(reg)
+            reg = selectFullLines(self.view, reg)
             text = maker.parseText(self.view.substr(reg).split("\n"))
             if text:
                 regions.append((reg, text))
