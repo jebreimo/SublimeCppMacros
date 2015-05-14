@@ -205,6 +205,14 @@ def cleanPrefix(lines, isMember):
         appendIfNonEmpty(result, line)
     return result
 
+def cleanSuffix(lines):
+    result = []
+    for line in lines:
+        line = removeWord(line, "override")
+        line = line.strip()
+        appendIfNonEmpty(result, line)
+    return result
+
 def getIndentation(s):
     i = 0
     while i < len(s) and s[i].isspace():
@@ -237,7 +245,7 @@ def parseFunction(lines, className):
     d["arguments"] = args
     if suf:
         suf[-1] = suf[-1][:-1]
-    d["suffix"] = [s for s in suf if s]
+    d["suffix"] = cleanSuffix(suf)
     return d
 
 def getImplementation(func):
