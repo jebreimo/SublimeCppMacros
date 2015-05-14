@@ -40,7 +40,7 @@ class HppGetSetCommand(sublime_plugin.TextCommand):
             reg = selectFullLines(self.view, reg)
             lines = []
             for rawLine in self.view.substr(reg).split("\n"):
-                args = parseMember(rawLine, "lower-set")
+                args = parseMember(rawLine, "lower-get-set")
                 if args:
                     lines.append(HppGetSetTemplate % args)
             regions.append((reg, "\n".join(lines)))

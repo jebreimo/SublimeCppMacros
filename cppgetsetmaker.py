@@ -45,7 +45,7 @@ class CppGetSetMaker:
             self.className = name
             self.completeClassName = name and name + tempArgs + "::"
         else:
-            props = parseMember(line, "lower-set")
+            props = parseMember(line, "lower-get-set")
             if props:
                 props["class"] = self.completeClassName
                 props["template"] = self.templateSpec
