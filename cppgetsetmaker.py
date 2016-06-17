@@ -26,13 +26,14 @@ def classNameFromFileName(fileName):
     return os.path.splitext(os.path.basename(fileName))[0]
 
 class CppGetSetMaker:
-    def __init__(self, fileName):
+    def __init__(self, fileName, style="lower-get-set"):
         self.defaultClassName = classNameFromFileName(fileName)
         if not self.defaultClassName:
             self.defaultClassName = "CLASS"
         self.className = self.defaultClassName
         self.completeClassName = self.className + "::"
         self.templateSpec = ""
+        self.style = style
 
     def parseLine(self, line):
         stripped = line.strip()
@@ -45,7 +46,7 @@ class CppGetSetMaker:
             self.className = name
             self.completeClassName = name and name + tempArgs + "::"
         else:
-            props = parseMember(line, "lower-set")
+            props = parseMember(line, self.style)
             if props:
                 props["class"] = self.completeClassName
                 props["template"] = self.templateSpec

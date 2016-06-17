@@ -104,7 +104,7 @@ def splitFunction(lines):
         if pos != -1:
             appendIfNonEmpty(args, line[:pos].rstrip())
             appendIfNonEmpty(suffix, line[pos + 1:].strip())
-            suffix.extend(remainder[i + 1:])
+            suffix.extend(l for l in remainder[i + 1:] if l.strip())
             break
         else:
             args.append(line)
@@ -205,6 +205,15 @@ def cleanPrefix(lines, isMember):
         appendIfNonEmpty(result, line)
     return result
 
+def cleanSuffix(lines, isMember):
+    result = []
+    for line in lines:
+        if isMember:
+            line = removeWord(line, "override")
+        line = line.strip()
+        appendIfNonEmpty(result, line)
+    return result
+
 def getIndentation(s):
     i = 0
     while i < len(s) and s[i].isspace():
@@ -214,14 +223,28 @@ def getIndentation(s):
     else:
         return "    "
 
-def getReturnValue(lines):
+def getReturnValue(lines, className):
     line = removeWord(" ".join(lines), "const").strip()
-    if not line or line == "void" or line[-1] == "&":
+    if not line or line == "void":
         return ""
+    elif line[-1] == "&":
+        if className and line[:-1] == className:
+            return "*this"
+        else:
+            return ""
     elif line[-1] == "*":
         return "nullptr"
     else:
         return line + "()"
+
+def getAutoReturnValue(lines, className):
+    for row in range(len(lines)):
+        col = lines[row].find("->")
+        if col != -1:
+            resultLines = [lines[row][col+2:]]
+            resultLines.extend(lines[row+1:])
+            return getReturnValue(resultLines, className)
+    return ""
 
 def parseFunction(lines, className):
     d = {"class": className}
@@ -232,12 +255,13 @@ def parseFunction(lines, className):
     d["name"] = name
     pre = cleanPrefix(pre, className)
     d["return"] = pre
-    d["value"] = getReturnValue(pre)
-    args = cleanArguments(args)
-    d["arguments"] = args
-    if suf:
+    d["value"] = getReturnValue(pre, className)
+    d["arguments"] = cleanArguments(args)
+    if suf and suf[-1] and suf[-1][-1] == ";":
         suf[-1] = suf[-1][:-1]
-    d["suffix"] = [s for s in suf if s]
+    d["suffix"] = cleanSuffix([s for s in suf if s], className)
+    if d["value"] == "auto()":
+        d["value"] = getAutoReturnValue(d["suffix"], className)
     return d
 
 def getImplementation(func):
@@ -270,10 +294,12 @@ def getImplementation(func):
     if func["suffix"]:
         lines[-1] += " " + func["suffix"][0]
         lines.extend((func["indentation"] + s) for s in func["suffix"][1:])
-    lines.append("{")
     if func["value"]:
+        lines.append("{")
         lines.append(func["indentation"] + "return " + func["value"] + ";")
-    lines.append("}\n")
+        lines.append("}\n")
+    else:
+        lines.append("{}\n")
     return "\n".join(lines)
 
 class CppImplMaker:
@@ -316,4 +342,20 @@ if __name__ == "__main__":
         print(maker.parseText(open(args[0])))
         return 0
 
-    sys.exit(testCppImplMaker(sys.argv[1:]))
+#     _code = """\
+# template <typename T>
+# const std::vector<const P*>& const foo(const T& n,
+#                                        std::string& s) override;
+#            """
+
+    _code = """\
+template <typename U, typename V>
+auto operator*(const Vector<U>& u, Vector<V>& v)
+    -> decltype(u * v);
+    """
+    def testParseFunction(args):
+        print(parseFunction(_code.split("\n"), "CLASS"))
+        return 0
+
+    # sys.exit(testCppImplMaker(sys.argv[1:]))
+    sys.exit(testParseFunction(sys.argv[1:]))

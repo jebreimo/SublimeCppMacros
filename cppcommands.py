@@ -18,6 +18,8 @@ HppGetSetTemplate = """\
 %(indent)s%(static)svoid %(set)s(%(type)s value);
 """
 
+GetSetStyle = "lower-set"
+
 def selectFullLines(view, region):
     if region.a == region.b:
         return view.full_line(region)
@@ -40,7 +42,7 @@ class HppGetSetCommand(sublime_plugin.TextCommand):
             reg = selectFullLines(self.view, reg)
             lines = []
             for rawLine in self.view.substr(reg).split("\n"):
-                args = parseMember(rawLine, "lower-set")
+                args = parseMember(rawLine, GetSetStyle)
                 if args:
                     lines.append(HppGetSetTemplate % args)
             regions.append((reg, "\n".join(lines)))
@@ -56,7 +58,7 @@ class CppGetSetCommand(sublime_plugin.TextCommand):
         bufferId = self.view.buffer_id()
         maker = self.makers.get(bufferId)
         if not maker:
-            maker = CppGetSetMaker(self.view.file_name())
+            maker = CppGetSetMaker(self.view.file_name(), GetSetStyle)
             self.makers[bufferId] = maker
         regions = []
         for reg in self.view.sel():
