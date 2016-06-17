@@ -259,7 +259,7 @@ def parseFunction(lines, className):
     d["arguments"] = cleanArguments(args)
     if suf and suf[-1] and suf[-1][-1] == ";":
         suf[-1] = suf[-1][:-1]
-    d["suffix"] = cleanSuffix([s for s in suf if s], className)
+    d["suffix"] = cleanSuffix(suf, className)
     if d["value"] == "auto()":
         d["value"] = getAutoReturnValue(d["suffix"], className)
     return d
